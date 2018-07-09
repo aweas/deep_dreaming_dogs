@@ -90,7 +90,7 @@ class neural_network:
         return self.sess.run(self.logits, feed_dict={self.input: img})[:, 0]
     
     def save_model(self, location):
-        self.saver.save(self.sess, 'saved_model/classifier.ckpt')      
+        self.saver.save(self.sess, location)      
         
     def test(self):
         prin('dupa')
