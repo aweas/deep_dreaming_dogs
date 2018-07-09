@@ -12,6 +12,7 @@ class neural_network:
         self.inference = None
         self.sess = None
         self.dropout_prob = None
+        self.logits = None
 
         self.X_train = X_train
         self.y_train = y_train
@@ -46,7 +47,7 @@ class neural_network:
         with tf.variable_scope('cnn'):
             self.inference = self._inference()
 
-        logits = tf.nn.softmax(self.inference, name='output')
+        self.logits = tf.nn.softmax(self.inference, name='output')
 
         with tf.name_scope('training'):
             loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=y_input, logits=self.inference))
@@ -62,7 +63,7 @@ class neural_network:
             ls = 0
             for j in range(iterations):
                 point = j * batch_size
-                ls_temp, _, answ = self.sess.run([loss, optimize, logits],
+                ls_temp, _, answ = self.sess.run([loss, optimize, self.logits],
                                                  feed_dict={self.input: X_train[point:point + batch_size],
                                                             y_input: y_train[point:point + batch_size],
                                                             self.dropout_prob: 0.5})
@@ -86,9 +87,7 @@ class neural_network:
         return 1 - np.sum(np.logical_xor(np.asarray(y_test)[:, 0], np.round(res))) / len(X_test)
 
     def predict(self, img):
-        logits = tf.nn.softmax(self.inference, name='output')
-
-        return self.sess.run(logits, feed_dict={self.input: img})[:, 0]
+        return self.sess.run(self.logits, feed_dict={self.input: img})[:, 0]
     
     def save_model(self, location):
         self.saver.save(self.sess, 'saved_model/classifier.ckpt')        
