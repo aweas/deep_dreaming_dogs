@@ -6,35 +6,6 @@ import tqdm
 class neural_network:
     def _inference(self):
         raise NotImplementedError("Must create a deriving class with own architecture implementation")
-    #     inp = self.input
-    #     with tf.name_scope('classificator'):
-    #         with tf.name_scope('convolution'):
-    #             layer = tf.layers.conv2d(inp, 32, 3, activation=tf.nn.relu, name='layer1')
-    #             layer = tf.layers.max_pooling2d(layer, pool_size=3, strides=2)
-    #             layer = tf.layers.conv2d(layer, 64, 3, activation=tf.nn.relu)
-    #             layer = tf.layers.max_pooling2d(layer, pool_size=3, strides=2)
-    #             layer = tf.nn.dropout(layer, self.dropout_prob)
-    #             layer = tf.layers.conv2d(layer, 64, 3, activation=tf.nn.relu)
-    #             layer = tf.layers.max_pooling2d(layer, pool_size=3, strides=2)
-    #             layer = tf.layers.conv2d(layer, 64, 3, activation=tf.nn.relu, padding='same')
-    #             layer = tf.layers.max_pooling2d(layer, pool_size=3, strides=2)
-    #             layer = tf.layers.conv2d(layer, 32, 5, activation=tf.nn.relu, padding='same', name='layer-1')
-    #             layer = tf.nn.dropout(layer, .5)
-    #             layer = tf.layers.max_pooling2d(layer, pool_size=3, strides=2)
-    # #             layer = tf.layers.conv2d(layer, 16, 5, activation=tf.nn.relu)
-    # #             layer = tf.layers.max_pooling2d(layer, pool_size=3, strides=2)
-    #             layer = tf.layers.flatten(layer)
-
-    #         with tf.name_scope('dense'):
-    #             layer = tf.layers.dense(layer, 1024, activation=tf.nn.relu)
-    #             layer = tf.nn.dropout(layer, self.dropout_prob)
-    #             layer = tf.layers.dense(layer, 512, activation=tf.nn.relu)
-    #             layer = tf.layers.batch_normalization(layer)
-    #             layer = tf.layers.dense(layer, 128, activation=tf.nn.relu)
-    #             layer = tf.layers.batch_normalization(layer)
-    #             layer = tf.layers.dense(layer, 2, activation=tf.nn.softmax)
-
-        # return layer
 
     def __init__(self, input_shape, X_train=None, y_train=None, X_test=None, y_test=None):
         self.input = None
@@ -47,8 +18,8 @@ class neural_network:
         self.X_test = X_test
         self.y_test = y_test
 
-        self.saver = tf.train.Saver()
-        self.train_writer = tf.summary.FileWriter('logs/', self.sess.graph)
+        self.saver = None
+        self.train_writer = None
 
         self.input_shape = input_shape
 
@@ -58,7 +29,7 @@ class neural_network:
         self.input = tf.placeholder(tf.float32, shape=(None, *self.input_shape), name='features')
         self.dropout_prob = tf.placeholder_with_default(1.0, shape=())
 
-    def training(self, X_train=None, y_train=None, X_test=None, y_test=None, epochs=100, batch_size=64):
+    def training(self, X_train=None, y_train=None, X_test=None, y_test=None, epochs=100, batch_size=64, iter_before_validation=10):
         self.reset()
 
         # If arguments are empty, take fields
@@ -82,7 +53,10 @@ class neural_network:
             optimize = tf.train.AdamOptimizer().minimize(loss)
 
         self.sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
-
+        
+        self.saver = tf.train.Saver()
+        self.train_writer = tf.summary.FileWriter('logs/', self.sess.graph)
+        
         iterations = int(len(X_train) / batch_size)
         for i in tqdm.trange(epochs):
             ls = 0
@@ -94,7 +68,7 @@ class neural_network:
                                                             self.dropout_prob: 0.5})
                 ls += ls_temp / iterations
 
-            if i % 10 == 0:
+            if i % iter_before_validation == 0:
                 acc_train = 1 - np.sum(np.logical_xor(np.asarray(y_train)[point:point + batch_size, 0], np.round(answ)[:, 0])) / batch_size
 
                 if X_test is not None and y_test is not None:
@@ -115,3 +89,6 @@ class neural_network:
         logits = tf.nn.softmax(self.inference, name='output')
 
         return self.sess.run(logits, feed_dict={self.input: img})[:, 0]
+    
+    def save_model(self, location):
+        self.saver.save(self.sess, 'saved_model/classifier.ckpt')        
