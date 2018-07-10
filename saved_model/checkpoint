@@ -1,2 +1,2 @@
-model_checkpoint_path: "classifier.ckpt"
-all_model_checkpoint_paths: "classifier.ckpt"
+model_checkpoint_path: "classifier_color.ckpt"
+all_model_checkpoint_paths: "classifier_color.ckpt"
