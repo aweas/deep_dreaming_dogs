@@ -6,10 +6,10 @@ Training set used: https://www.kaggle.com/c/dogs-vs-cats
 
 ### Sample results
 ## Inputs
-![dog](https://i.imgur.com/y5kr7ve.jpg)
-![cat](https://i.imgur.com/e7gLp6d.jpg)
-![cat2](https://i.imgur.com/R0viaB9.jpg)
-![dog2](https://i.imgur.com/ITyp5XK.jpg)
+<img src="https://i.imgur.com/y5kr7ve.jpg" width="256" height="256" />
+<img src="https://i.imgur.com/e7gLp6d.jpg" width="256" height="256" />
+<img src="https://i.imgur.com/R0viaB9.jpg" width="256" height="256" />
+<img src="https://i.imgur.com/ITyp5XK.jpg" width="256" height="256" />
 
 ## Results
 ![Processed dog photo](https://i.imgur.com/8CNtpeQ.jpg)
