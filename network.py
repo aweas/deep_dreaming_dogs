@@ -7,7 +7,7 @@ class neural_network:
     def _inference(self):
         raise NotImplementedError("Must create a deriving class with own architecture implementation")
 
-    def __init__(self, input_shape, X_train=None, y_train=None, X_test=None, y_test=None):
+    def __init__(self, input_shape, X_train=None, y_train=None, X_test=None, y_test=None, mode='files'):
         self.input = None
         self.inference = None
         self.sess = None
@@ -21,6 +21,8 @@ class neural_network:
 
         self.saver = None
         self.train_writer = None
+
+        self.mode = mode
 
         self.input_shape = input_shape
 
@@ -54,10 +56,10 @@ class neural_network:
             optimize = tf.train.AdamOptimizer().minimize(loss)
 
         self.sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
-        
+
         self.saver = tf.train.Saver()
         self.train_writer = tf.summary.FileWriter('logs/', self.sess.graph)
-        
+
         iterations = int(len(X_train) / batch_size)
         for i in tqdm.trange(epochs):
             ls = 0
@@ -88,9 +90,9 @@ class neural_network:
 
     def predict(self, img):
         return self.sess.run(self.logits, feed_dict={self.input: img})[:, 0]
-    
+
     def save_model(self, location):
-        self.saver.save(self.sess, location)      
-        
+        self.saver.save(self.sess, location)
+
     def test(self):
         prin('dupa')
