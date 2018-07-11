@@ -1,2 +1,2 @@
-model_checkpoint_path: "classifier_small.ckpt"
-all_model_checkpoint_paths: "classifier_small.ckpt"
+model_checkpoint_path: "classifier_256x256.ckpt"
+all_model_checkpoint_paths: "classifier_256x256.ckpt"
