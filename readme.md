@@ -5,6 +5,7 @@ but I will release them as .py for readability after finishing the project.
 Training set used: https://www.kaggle.com/c/dogs-vs-cats
 
 ## Sample results
-![Processed dog photo](https://i.imgur.com/9yvZMFu.png)
-![Processed cat photo](https://i.imgur.com/8GxvreR.png)
-![Cat photo 2](https://i.imgur.com/QPzxwLa.png)
+![Processed dog photo](https://i.imgur.com/8CNtpeQ.jpg)
+![Processed cat photo](https://i.imgur.com/5Jd6fk9.jpg)
+![Cat photo 2](https://i.imgur.com/d35Az8q.jpg)
+![Dog photo 2](https://i.imgur.com/bvgqRk6.jpg)
