@@ -3,7 +3,7 @@ import numpy as np
 import tqdm
 
 
-class neural_network:
+class abstract_network:
     def _inference(self):
         raise NotImplementedError("Must create a deriving class with own architecture implementation")
 
@@ -32,16 +32,35 @@ class neural_network:
         self.input = tf.placeholder(tf.float32, shape=(None, *self.input_shape), name='features')
         self.dropout_prob = tf.placeholder_with_default(1.0, shape=())
 
-    def training(self, X_train=None, y_train=None, X_test=None, y_test=None, epochs=100, batch_size=64, iter_before_validation=10):
+    def training(self, epochs=100, batch_size=64, iter_before_validation=10, log_training=False):
+        """ Trains network with data provided in constructor """
+        y_input, loss, optimize = self._prepare_for_training(log_training)
+
+        iterations = int(len(self.X_train) / batch_size)
+        for i in tqdm.trange(epochs):
+            ls = 0
+            for j in range(iterations):
+                point = j * batch_size
+                ls_temp, _, answ = self.sess.run([loss, optimize, self.logits],
+                                                 feed_dict={self.input: self.X_train[point:point + batch_size],
+                                                            y_input: self.y_train[point:point + batch_size],
+                                                            self.dropout_prob: 0.5})
+                ls += ls_temp / iterations
+
+            if i % iter_before_validation == 0:
+                acc_train = 1 - np.sum(np.logical_xor(self.y_train[point:point + batch_size, 0], np.round(answ)[:, 0])) / batch_size
+
+                if self.X_test is not None and self.y_test is not None:
+                    acc = self._get_accuracy(self.X_test, self.y_test)
+                    print(f'Test accuracy: {int(acc*100)}% \tTraining loss: {ls} \t Training accuracy: {int(acc_train*100)}%')
+                else:
+                    print(f'Training loss: {ls} \t Training accuracy: {int(acc_train*100)}%')
+
+    def _prepare_for_training(self, log_training):
+        """ Prepares all necessary variables and fields """
         self.reset()
 
-        # If arguments are empty, take fields
-        X_train = self.X_train if X_train is None else X_train
-        y_train = self.y_train if y_train is None else y_train
-        X_test = self.X_test if X_test is None else X_test
-        y_test = self.y_test if y_test is None else y_test
-
-        if any([arg is None for arg in [X_train, y_train]]):
+        if any([arg is None for arg in [self.X_train, self.y_train]]):
             raise TypeError("Training data cannot be empty!")
 
         y_input = tf.placeholder(tf.float32, shape=(None, 2))
@@ -58,27 +77,11 @@ class neural_network:
         self.sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
 
         self.saver = tf.train.Saver()
-        self.train_writer = tf.summary.FileWriter('logs/', self.sess.graph)
 
-        iterations = int(len(X_train) / batch_size)
-        for i in tqdm.trange(epochs):
-            ls = 0
-            for j in range(iterations):
-                point = j * batch_size
-                ls_temp, _, answ = self.sess.run([loss, optimize, self.logits],
-                                                 feed_dict={self.input: X_train[point:point + batch_size],
-                                                            y_input: y_train[point:point + batch_size],
-                                                            self.dropout_prob: 0.5})
-                ls += ls_temp / iterations
+        if log_training:
+            self.train_writer = tf.summary.FileWriter('logs/', self.sess.graph)
 
-            if i % iter_before_validation == 0:
-                acc_train = 1 - np.sum(np.logical_xor(np.asarray(y_train)[point:point + batch_size, 0], np.round(answ)[:, 0])) / batch_size
-
-                if X_test is not None and y_test is not None:
-                    acc = self._get_accuracy(X_test, y_test)
-                    print(f'Test accuracy: {int(acc*100)}% \tTraining loss: {ls} \t Training accuracy: {int(acc_train*100)}%')
-                else:
-                    print(f'Training loss: {ls} \t Training accuracy: {int(acc_train*100)}%')
+        return y_input, loss, optimize
 
     def _get_accuracy(self, X_test, y_test, batch_size=128):
         res = []
@@ -93,6 +96,3 @@ class neural_network:
 
     def save_model(self, location):
         self.saver.save(self.sess, location)
-
-    def test(self):
-        prin('dupa')
