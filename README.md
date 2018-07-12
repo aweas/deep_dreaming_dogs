@@ -6,9 +6,17 @@ Training set used: https://www.kaggle.com/c/dogs-vs-cats
 
 ### Sample results
 ## Inputs
-<img src="https://i.imgur.com/y5kr7ve.jpg" width="256" height="256" />
-<img src="https://i.imgur.com/e7gLp6d.jpg" width="256" height="256" />
-<img src="https://i.imgur.com/R0viaB9.jpg" width="256" height="256" />
+<div class="row">
+  <div class="column">
+    <img src="https://i.imgur.com/y5kr7ve.jpg" width="256" height="256"/>
+  </div>
+  <div class="column">
+    <img src="https://i.imgur.com/e7gLp6d.jpg" width="256" height="256"/>
+  </div>
+  <div class="column">
+    <img src="https://i.imgur.com/R0viaB9.jpg" width="256" height="256" />
+  </div>
+</div> 
 <img src="https://i.imgur.com/ITyp5XK.jpg" width="256" height="256" />
 
 ## Results
@@ -16,3 +24,4 @@ Training set used: https://www.kaggle.com/c/dogs-vs-cats
 ![Processed cat photo](https://i.imgur.com/5Jd6fk9.jpg)
 ![Cat photo 2](https://i.imgur.com/d35Az8q.jpg)
 ![Dog photo 2](https://i.imgur.com/bvgqRk6.jpg)
+
