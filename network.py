@@ -91,7 +91,7 @@ class abstract_network:
             for j in tqdm.trange(iterations):
                 X_train, y_train = self.sess.run(self.next_training_batch)
 
-                ls_temp, _, answ = self.sess.run([loss, optimize, self.inference],
+                ls_temp, _, answ = self.sess.run([loss, optimize, self.logits],
                                                  feed_dict={self.input: X_train,
                                                             y_input: y_train,
                                                             self.dropout_prob: 0.5})
@@ -141,10 +141,10 @@ class abstract_network:
         with tf.variable_scope('cnn'):
             self.inference = self._inference()
 
-        # self.logits = tf.nn.softmax(self.inference, name='output')
+        self.logits = tf.nn.softmax(self.inference, name='output')
 
         with tf.name_scope('training'):
-            loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=y_input, logits=self.inference))
+            loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=y_input, logits=self.logits))
             optimize = tf.train.AdamOptimizer().minimize(loss)
 
         self.sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
@@ -210,7 +210,7 @@ class abstract_network:
         return len(real_res[real_res == res])/len(real_res)
 
     def predict(self, img):
-        return self.sess.run(self.inference, feed_dict={self.input: img})
+        return self.sess.run(self.logits, feed_dict={self.input: img})
 
     def freeze_model(self, location):
         """ Prepare ProtoBuffer file containing graph definition and all variables necessary for inference (and nothing more) 
