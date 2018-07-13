@@ -5,6 +5,7 @@ import cv2
 import skimage.transform
 import matplotlib.pyplot as plt
 
+
 class abstract_network:
     def _inference(self):
         raise NotImplementedError("Must create a deriving class with own architecture implementation")
@@ -171,7 +172,7 @@ class abstract_network:
         if log_training:
             self.train_writer = tf.summary.FileWriter('logs/', self.sess.graph)
 
-        ## I MIGHT clean this up someday, but this day has yet to come
+        # I MIGHT clean this up someday, but this day has yet to come
         # Prepare everything for training data
         self.train_labels = np.zeros(len(self.train_location), dtype=np.uint8)
         self.train_labels[['dog' in x for x in self.train_location]] = 1
@@ -222,5 +223,14 @@ class abstract_network:
     def predict(self, img):
         return self.sess.run(self.logits, feed_dict={self.input: img})[:, 0]
 
-    def save_model(self, location):
-        self.saver.save(self.sess, location)
+    def freeze_model(self, location):
+        inference_nodes = tf.graph_util.remove_training_nodes(tf.get_default_graph().as_graph_def())
+
+        output_graph_def = tf.graph_util.convert_variables_to_constants(
+            self.sess,
+            inference_nodes,
+            ['output']
+        )
+
+        with tf.gfile.GFile(location, "wb") as f:
+            f.write(output_graph_def.SerializeToString())

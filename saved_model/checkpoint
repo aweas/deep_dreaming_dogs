@@ -1,3 +1,0 @@
-model_checkpoint_path: "classifier_256x256_full.ckpt"
-all_model_checkpoint_paths: "classifier_256x256_ful.ckpt"
-all_model_checkpoint_paths: "classifier_256x256_full.ckpt"
