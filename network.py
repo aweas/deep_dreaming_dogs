@@ -25,7 +25,7 @@ class abstract_network:
 
     def _input_parser(self, img_path, label):
         # convert the label to one-hot encoding
-        one_hot = tf.one_hot(label, 2, dtype=np.uint8)
+        one_hot = tf.one_hot(label, 3, dtype=np.uint8)
 
         # read the img from file
         img_file = tf.read_file(img_path)
@@ -68,8 +68,14 @@ class abstract_network:
         y_input, loss, optimize = self._prepare_for_training(batch_size, log_training)
 
         print(f'{int(len(self.train_labels[self.train_labels==0])/len(self.train_labels)*100)}% of training is class 0')
+        print(f'{int(len(self.train_labels[self.train_labels==1])/len(self.train_labels)*100)}% of training is class 1')
+        print(f'{int(len(self.train_labels[self.train_labels==2])/len(self.train_labels)*100)}% of training is class 2')
+
         if self.test_location is not None:
             print(f'{int(len(self.test_labels[self.test_labels==0])/len(self.test_labels)*100)}% of test is class 0')
+            print(f'{int(len(self.test_labels[self.test_labels==1])/len(self.test_labels)*100)}% of test is class 1')
+            print(f'{int(len(self.test_labels[self.test_labels==2])/len(self.test_labels)*100)}% of test is class 2')
+
 
         for i in range(epochs):
             ls = 0
@@ -85,19 +91,20 @@ class abstract_network:
             for j in tqdm.trange(iterations):
                 X_train, y_train = self.sess.run(self.next_training_batch)
 
-                ls_temp, _, answ = self.sess.run([loss, optimize, self.logits],
+                ls_temp, _, answ = self.sess.run([loss, optimize, self.inference],
                                                  feed_dict={self.input: X_train,
                                                             y_input: y_train,
                                                             self.dropout_prob: 0.5})
                 ls += ls_temp / iterations
-                training_answers.extend(answ)
-                real_answers.extend(y_train)
+                training_answers.extend(np.argmax(answ, axis=1))
+                real_answers.extend(np.argmax(y_train, axis=1))
 
             if i % iter_before_validation == 0:
                 training_answers = np.asarray(training_answers)
                 real_answers = np.asarray(real_answers)
 
-                acc_train = 1 - np.sum(np.logical_xor(real_answers[:, 0], np.round(training_answers)[:, 0])) / len(training_answers)
+                # acc_train = 1 - np.sum(np.logical_xor(real_answers[:, 0], np.round(training_answers)[:, 0])) / len(training_answers)
+                acc_train = len(real_answers[real_answers == training_answers])/len(real_answers)
 
                 if self.test_location is not None:
                     acc = self._get_accuracy(batch_size)
@@ -108,13 +115,14 @@ class abstract_network:
     def _read_images(self, files_to_read):
         """ Read image and encode label from provided paths """
         X = np.empty((len(files_to_read), *self.input_shape), dtype=np.float32)
-        y = np.empty((len(files_to_read), 2), dtype=np.uint8)
+        y = np.empty((len(files_to_read), 3), dtype=np.uint8)
 
         for num, i in enumerate(files_to_read):
             X[num] = cv2.imread(i)[:, :, ::-1]
 
-        y['cat' in files_to_read] = [1, 0]
-        y['cat' not in files_to_read] = [0, 1]
+        y[:] = [0, 0, 1]
+        y['cat' in files_to_read] = [1, 0, 0]
+        y['dog' in files_to_read] = [0, 1, 0]
 
         return X, y
 
@@ -128,12 +136,12 @@ class abstract_network:
         if self.train_location is None:
             raise TypeError("Training data cannot be empty!")
 
-        y_input = tf.placeholder(tf.float32, shape=(None, 2))
+        y_input = tf.placeholder(tf.float32, shape=(None, 3))
 
         with tf.variable_scope('cnn'):
             self.inference = self._inference()
 
-        self.logits = tf.nn.softmax(self.inference, name='output')
+        # self.logits = tf.nn.softmax(self.inference, name='output')
 
         with tf.name_scope('training'):
             loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=y_input, logits=self.inference))
@@ -148,8 +156,10 @@ class abstract_network:
 
         # I MIGHT clean this up someday, but this day has yet to come
         # Prepare everything for training data
-        self.train_labels = np.zeros(len(self.train_location), dtype=np.uint8)
+        self.train_labels = np.zeros(len(self.train_location), dtype=np.uint8)+2
         self.train_labels[['dog' in x for x in self.train_location]] = 1
+        self.train_labels[['cat' in x for x in self.train_location]] = 0
+
         self.train_labels_tensor = tf.constant(self.train_labels)
         self.train_tensor = tf.constant(self.train_location)
 
@@ -166,8 +176,9 @@ class abstract_network:
 
         if self.test_location is not None:
             # Prepare everything for test data
-            self.test_labels = np.zeros(len(self.test_location), dtype=np.uint8)
+            self.test_labels = np.zeros(len(self.test_location), dtype=np.uint8)+2
             self.test_labels[['dog' in x for x in self.test_location]] = 1
+            self.test_labels[['cat' in x for x in self.test_location]] = 0
             self.test_labels_tensor = tf.constant(self.test_labels)
             self.test_tensor = tf.constant(self.test_location)
 
@@ -190,13 +201,16 @@ class abstract_network:
         for j in range(int(len(self.test_location) / batch_size) + 1):
             X_test, y_test = self.sess.run(self.next_test_batch)
 
-            res.extend(self.predict(X_test))
-            real_res.extend(y_test[:, 0])
+            res.extend(np.argmax(self.predict(X_test), axis=1))
+            real_res.extend(np.argmax(y_test, axis=1))
 
-        return 1 - np.sum(np.logical_xor(real_res, np.round(res))) / len(res)
+        # return 1 - np.sum(np.logical_xor(real_res, np.round(res))) / len(res)
+        res = np.asarray(res)
+        real_res = np.asarray(real_res)
+        return len(real_res[real_res == res])/len(real_res)
 
     def predict(self, img):
-        return self.sess.run(self.logits, feed_dict={self.input: img})[:, 0]
+        return self.sess.run(self.inference, feed_dict={self.input: img})
 
     def freeze_model(self, location):
         """ Prepare ProtoBuffer file containing graph definition and all variables necessary for inference (and nothing more) 
