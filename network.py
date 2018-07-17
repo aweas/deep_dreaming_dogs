@@ -215,3 +215,15 @@ class abstract_network:
 
         with tf.gfile.GFile(name, "wb") as f:
             f.write(output_graph_def.SerializeToString())
+
+    def show_summary(self):
+        # Count total number of parameters
+        total_parameters = 0
+        for variable in tf.trainable_variables():
+            shape = variable.get_shape()
+            variable_parameters = 1
+            for dim in shape:
+                variable_parameters *= dim.value
+            total_parameters += variable_parameters
+            print(variable.name, f'\t{variable_parameters} params\t{shape}')
+        print(f'\nTotal: {total_parameters} params')
