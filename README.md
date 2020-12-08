@@ -1,5 +1,5 @@
 # deep_dreaming_dogs
-Own implementation of deep dreaming algorithm from scratch, CNN training included. All files are in jupyter notebooks,
+Deepdream-like algorithm implementation, CNN training included. All files are in jupyter notebooks,
 but I will release them as .py for readability after finishing the project.
 
 File network.py also includes example of loading big dataset using new Dataset and Iterator tensorflow API
